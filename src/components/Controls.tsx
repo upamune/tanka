@@ -3,6 +3,8 @@ import { toast } from 'react-hot-toast';
 import { BACKGROUNDS } from '../constants';
 import type { TankaData } from '../types';
 import { FontSelect } from './FontSelect';
+import { Switch } from '../components/ui/switch';
+import { Label } from '../components/ui/label';
 
 interface Props {
   tanka: TankaData;
@@ -72,6 +74,19 @@ export const Controls = ({
               ))}
             </fieldset>
           </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <Label htmlFor="writing-mode" className="text-sm font-medium">
+            縦書き
+          </Label>
+          <Switch
+            id="writing-mode"
+            checked={tanka.isVertical}
+            onCheckedChange={(checked) => {
+              onTankaChange({ ...tanka, isVertical: checked });
+            }}
+          />
         </div>
 
         <div className="flex flex-wrap gap-3 sm:gap-4 justify-center sm:justify-start">

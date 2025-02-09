@@ -2,6 +2,7 @@ export interface TankaData {
   text: string;
   font: string;
   background: string;
+  isVertical: boolean;
 }
 
 export interface FontOption {

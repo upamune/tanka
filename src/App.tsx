@@ -11,6 +11,7 @@ function App() {
     text: '秋の夜の\n長月夜には\n月を見て\n物思ふ事も\n多くなりけり',
     font: FONTS[0].family,
     background: BACKGROUNDS[0],
+    isVertical: true,
   });
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -69,6 +70,7 @@ function App() {
     params.set('text', tanka.text);
     params.set('font', tanka.font);
     params.set('bg', tanka.background);
+    params.set('vertical', String(tanka.isVertical));
     
     // 現在のパスを保持しつつ、クエリパラメータを更新
     const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
@@ -83,15 +85,17 @@ function App() {
     const textParam = params.get('text');
     const fontParam = params.get('font');
     const bgParam = params.get('bg');
+    const isVerticalParam = params.get('vertical');
 
-    if (textParam || fontParam || bgParam) {
+    if (textParam || fontParam || bgParam || isVerticalParam) {
       setTanka({
         text: textParam || tanka.text,
         font: fontParam || tanka.font,
         background: bgParam || tanka.background,
+        isVertical: isVerticalParam ? isVerticalParam === 'true' : tanka.isVertical,
       });
     }
-  }, [tanka.background, tanka.font, tanka.text]);
+  }, [tanka.background, tanka.font, tanka.text, tanka.isVertical]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 sm:py-12 px-3 sm:px-4">
