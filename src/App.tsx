@@ -38,25 +38,52 @@ function App() {
         // フォントの読み込みを待つ
         await document.fonts.ready;
         
-        // フォントの読み込み完了を待機
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // 使用中のフォントが確実に読み込まれるのを待つ
+        const currentFont = new FontFace(tanka.font, `local(${tanka.font})`);
+        try {
+          await currentFont.load();
+          document.fonts.add(currentFont);
+        } catch (e) {
+          console.warn('Font loading warning:', e);
+          // フォントのロードに失敗しても続行（ローカルフォントの場合）
+        }
 
-        // 現在のスタイルをインラインで適用
+        // DOMの更新とレンダリングを待つ
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // 要素の実際のサイズを取得
+        const rect = containerRef.current.getBoundingClientRect();
         const computedStyle = window.getComputedStyle(containerRef.current);
-        const inlineStyle = {
-          fontFamily: computedStyle.fontFamily,
-          fontSize: computedStyle.fontSize,
-          fontWeight: computedStyle.fontWeight,
-          lineHeight: computedStyle.lineHeight,
-          letterSpacing: computedStyle.letterSpacing,
-          textRendering: 'optimizeLegibility',
-        };
-        
+
+        // スタイルをすべてコピー
+        const styles = {} as Record<string, string>;
+        for (const key of computedStyle) {
+          styles[key] = computedStyle.getPropertyValue(key);
+        }
+
         const dataUrl = await toPng(containerRef.current, {
           quality: 1.0,
-          pixelRatio: 2,
-          skipAutoScale: true,
-          style: inlineStyle,
+          pixelRatio: 3,
+          skipAutoScale: false,
+          width: rect.width,
+          height: rect.height,
+          style: {
+            ...styles,
+            margin: '0',
+            padding: computedStyle.padding,
+            fontFamily: `"${tanka.font}", serif`,
+            textRendering: 'optimizeLegibility',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+          fontEmbedCSS: `
+            @font-face {
+              font-family: "${tanka.font}";
+              src: local("${tanka.font}");
+            }
+          `,
+          backgroundColor: '#ffffff',
         });
         
         const link = document.createElement('a');
