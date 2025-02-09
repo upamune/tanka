@@ -8,7 +8,7 @@ import { FONTS, BACKGROUNDS } from './constants';
 
 function App() {
   const [tanka, setTanka] = useState<TankaData>({
-    text: '秋の夜の\n長月夜には\n月を見て\n物思ふ事も\n多くなりけり',
+    text: '',
     font: FONTS[0].family,
     background: BACKGROUNDS[0],
     isVertical: true,
@@ -16,6 +16,20 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const updateTanka = (newTanka: TankaData) => {
+    setTanka(newTanka);
+    
+    // Update URL parameters
+    const params = new URLSearchParams();
+    if (newTanka.text) params.set('text', newTanka.text);
+    if (newTanka.font) params.set('font', newTanka.font);
+    if (newTanka.background) params.set('bg', newTanka.background);
+    params.set('vertical', String(newTanka.isVertical));
+    
+    const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+    window.history.replaceState({}, '', newUrl);
+  };
 
   const handleDownload = async () => {
     if (containerRef.current) {
@@ -43,10 +57,6 @@ function App() {
           pixelRatio: 2,
           skipAutoScale: true,
           style: inlineStyle,
-          filter: (node) => {
-            // 画像生成中の表示を除外
-            return !node.classList?.contains('absolute');
-          },
         });
         
         const link = document.createElement('a');
@@ -67,9 +77,9 @@ function App() {
     const params = new URLSearchParams();
     
     // 各パラメータを設定
-    params.set('text', tanka.text);
-    params.set('font', tanka.font);
-    params.set('bg', tanka.background);
+    if (tanka.text) params.set('text', tanka.text);
+    if (tanka.font) params.set('font', tanka.font);
+    if (tanka.background) params.set('bg', tanka.background);
     params.set('vertical', String(tanka.isVertical));
     
     // 現在のパスを保持しつつ、クエリパラメータを更新
@@ -79,23 +89,30 @@ function App() {
       .then(() => toast.success('共有用URLをコピーしました'));
   };
 
-  // Load from URL params on mount
+  // Load from URL params on mount and when URL changes
   React.useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const textParam = params.get('text');
-    const fontParam = params.get('font');
-    const bgParam = params.get('bg');
-    const isVerticalParam = params.get('vertical');
+    const loadParamsFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const textParam = params.get('text');
+      const fontParam = params.get('font');
+      const bgParam = params.get('bg');
+      const isVerticalParam = params.get('vertical');
 
-    if (textParam || fontParam || bgParam || isVerticalParam) {
-      setTanka({
-        text: textParam || tanka.text,
-        font: fontParam || tanka.font,
-        background: bgParam || tanka.background,
-        isVertical: isVerticalParam ? isVerticalParam === 'true' : tanka.isVertical,
-      });
-    }
-  }, [tanka.background, tanka.font, tanka.text, tanka.isVertical]);
+      setTanka(current => ({
+        text: textParam || current.text,
+        font: fontParam || current.font,
+        background: bgParam || current.background,
+        isVertical: isVerticalParam ? isVerticalParam === 'true' : current.isVertical,
+      }));
+    };
+
+    // Initial load
+    loadParamsFromUrl();
+
+    // Listen for popstate events (browser back/forward)
+    window.addEventListener('popstate', loadParamsFromUrl);
+    return () => window.removeEventListener('popstate', loadParamsFromUrl);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 sm:py-12 px-3 sm:px-4">
@@ -123,7 +140,7 @@ function App() {
       </div>
       <Controls
         tanka={tanka}
-        onTankaChange={setTanka}
+        onTankaChange={updateTanka}
         onDownload={handleDownload}
         onShare={handleShare}
         isGenerating={isGenerating}

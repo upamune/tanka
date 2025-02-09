@@ -51,7 +51,7 @@ export const TankaDisplay: React.FC<Props> = ({ tanka, containerRef }) => {
           </div>
         ) : (
           <div className="text-gray-400">
-            短歌
+            最高の短歌
           </div>
         )}
       </div>

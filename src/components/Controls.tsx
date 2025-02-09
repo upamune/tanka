@@ -98,10 +98,17 @@ export const Controls = ({
               isGenerating ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
-            <Download size={20} />
-            <span className="hidden sm:inline">
-              {isGenerating ? '生成中...' : '画像保存'}
-            </span>
+            {isGenerating ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>生成中...</span>
+              </>
+            ) : (
+              <>
+                <Download size={20} />
+                <span>画像保存</span>
+              </>
+            )}
           </button>
           <button
             type="button"
