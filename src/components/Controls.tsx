@@ -1,5 +1,4 @@
-import { Download, Share2, Instagram } from 'lucide-react';
-import { X } from 'lucide-react';
+import { Download, Share2, Twitter, Instagram } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { BACKGROUNDS } from '../constants';
 import type { TankaData } from '../types';
@@ -103,9 +102,9 @@ export const Controls = ({
             )}&url=${encodeURIComponent(shareUrl)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 text-sm sm:text-base"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm sm:text-base"
           >
-            <X size={20} />
+            <Twitter size={20} />
           </a>
           <button
             type="button"
