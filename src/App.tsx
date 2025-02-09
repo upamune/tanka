@@ -3,7 +3,7 @@ import { toPng } from 'html-to-image';
 import { Toaster, toast } from 'react-hot-toast';
 import { TankaDisplay } from './components/TankaDisplay';
 import { Controls } from './components/Controls';
-import { TankaData } from './types';
+import type { TankaData } from './types';
 import { FONTS, BACKGROUNDS } from './constants';
 
 function App() {
@@ -23,23 +23,29 @@ function App() {
         // フォントの読み込みを待つ
         await document.fonts.ready;
         
-        // フォントの読み込み状態を確認
-        const font = new FontFace(tanka.font.split(',')[0].replace(/['"]/g, ''), `local("${tanka.font.split(',')[0].replace(/['"]/g, '')}")`);
-        await font.load();
-        
-        // 少し待機してフォントのレンダリングを確実にする
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // フォントの読み込み完了を待機
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // 現在のスタイルをインラインで適用
+        const computedStyle = window.getComputedStyle(containerRef.current);
+        const inlineStyle = {
+          fontFamily: computedStyle.fontFamily,
+          fontSize: computedStyle.fontSize,
+          fontWeight: computedStyle.fontWeight,
+          lineHeight: computedStyle.lineHeight,
+          letterSpacing: computedStyle.letterSpacing,
+          textRendering: 'optimizeLegibility',
+        };
         
         const dataUrl = await toPng(containerRef.current, {
           quality: 1.0,
           pixelRatio: 2,
           skipAutoScale: true,
-          style: {
-            // フォントのアンチエイリアスを改善
-            textRendering: 'optimizeLegibility',
-            WebkitFontSmoothing: 'antialiased',
-            MozOsxFontSmoothing: 'grayscale',
-          }
+          style: inlineStyle,
+          filter: (node) => {
+            // 画像生成中の表示を除外
+            return !node.classList?.contains('absolute');
+          },
         });
         
         const link = document.createElement('a');
@@ -49,7 +55,7 @@ function App() {
         toast.success('画像を保存しました');
       } catch (error) {
         console.error('Image generation error:', error);
-        toast.error('画像の生成に失敗しました');
+        toast.error('画像の生成に失敗しました。ブラウザをリロードして再度お試しください。');
       } finally {
         setIsGenerating(false);
       }
@@ -57,7 +63,6 @@ function App() {
   };
 
   const handleShare = () => {
-    const url = new URL(window.location.href);
     const params = new URLSearchParams();
     
     // 各パラメータを設定
@@ -86,7 +91,7 @@ function App() {
         background: bgParam || tanka.background,
       });
     }
-  }, []);
+  }, [tanka.background, tanka.font, tanka.text]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 sm:py-12 px-3 sm:px-4">
@@ -101,13 +106,12 @@ function App() {
           },
         }}
       />
-      <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8">短歌</h1>
       <div className="relative">
         <TankaDisplay tanka={tanka} containerRef={containerRef} />
         {isGenerating && (
           <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
             <div className="text-center">
-              <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
               <p className="mt-2 text-gray-700 font-medium">画像を生成中...</p>
             </div>
           </div>

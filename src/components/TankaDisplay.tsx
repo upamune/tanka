@@ -1,5 +1,5 @@
-import React from 'react';
-import { TankaData } from '../types';
+import type React from 'react';
+import type { TankaData } from '../types';
 
 interface Props {
   tanka: TankaData;
@@ -7,11 +7,8 @@ interface Props {
 }
 
 export const TankaDisplay: React.FC<Props> = ({ tanka, containerRef }) => {
-  const formattedTanka = tanka.text.split('\n').map((line, i) => (
-    <div key={i} className="my-2">
-      {line}
-    </div>
-  ));
+  const lines = tanka.text.split('\n');
+  const hasContent = lines.some(line => line.trim().length > 0);
 
   // インラインスタイルとしてフォントを適用
   const style = {
@@ -28,10 +25,21 @@ export const TankaDisplay: React.FC<Props> = ({ tanka, containerRef }) => {
       className={`w-full max-w-2xl mx-auto p-12 rounded-lg shadow-lg ${tanka.background}`}
     >
       <div
-        className="text-2xl md:text-3xl text-gray-800 text-center leading-relaxed"
+        className="text-2xl md:text-3xl text-gray-800 text-center leading-relaxed min-h-[300px] flex flex-col justify-center"
         style={style}
       >
-        {formattedTanka}
+        {hasContent ? (
+          lines.map((line, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: :(
+            <div key={i} className="my-2">
+              {line}
+            </div>
+          ))
+        ) : (
+          <div className="text-gray-400">
+            短歌
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,9 +1,9 @@
-import React from 'react';
 import { Download, Share2, Instagram } from 'lucide-react';
 import { X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { FONTS, BACKGROUNDS } from '../constants';
-import { TankaData } from '../types';
+import { BACKGROUNDS } from '../constants';
+import type { TankaData } from '../types';
+import { FontSelect } from './FontSelect';
 
 interface Props {
   tanka: TankaData;
@@ -13,13 +13,13 @@ interface Props {
   isGenerating: boolean;
 }
 
-export const Controls: React.FC<Props> = ({
+export const Controls = ({
   tanka,
   onTankaChange,
   onDownload,
   onShare,
   isGenerating,
-}) => {
+}: Props) => {
   const shareUrl = `${window.location.origin}${window.location.pathname}?${new URLSearchParams({
     text: tanka.text,
     font: tanka.font,
@@ -30,55 +30,54 @@ export const Controls: React.FC<Props> = ({
     <div className="w-full max-w-2xl mx-auto mt-8 p-4 sm:p-6 bg-white rounded-lg shadow-lg">
       <div className="space-y-4 sm:space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="tanka-text" className="block text-sm font-medium text-gray-700 mb-2">
             短歌を入力
           </label>
           <textarea
+            id="tanka-text"
             value={tanka.text}
             onChange={(e) => onTankaChange({ ...tanka, text: e.target.value })}
-            className="w-full h-32 p-3 border rounded-md focus:ring-2 focus:ring-indigo-500 text-base sm:text-lg"
-            placeholder="ここに短歌を入力してください..."
+            className="w-full h-40 p-3 border rounded-md focus:ring-2 focus:ring-indigo-500 text-base sm:text-lg"
+            placeholder="5-7-5-7-7の音数で
+短歌を入力してください..."
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="font-select" className="block text-sm font-medium text-gray-700 mb-2">
               フォント選択
             </label>
-            <select
+            <FontSelect
+              id="font-select"
               value={tanka.font}
-              onChange={(e) => onTankaChange({ ...tanka, font: e.target.value })}
-              className="w-full p-2 border rounded-md text-base sm:text-lg"
-            >
-              {FONTS.map((font) => (
-                <option key={font.value} value={font.family} style={{ fontFamily: font.family }}>
-                  {font.name}
-                </option>
-              ))}
-            </select>
+              onChange={(font) => onTankaChange({ ...tanka, font })}
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="background-select" className="block text-sm font-medium text-gray-700 mb-2">
               背景選択
             </label>
-            <div className="flex gap-2">
+            <fieldset id="background-select" aria-labelledby="background-select-label" className="flex gap-2">
               {BACKGROUNDS.map((bg) => (
                 <button
+                  type="button"
                   key={bg}
                   onClick={() => onTankaChange({ ...tanka, background: bg })}
                   className={`w-12 h-12 rounded-md ${bg} ${
                     tanka.background === bg ? 'ring-2 ring-indigo-500' : ''
                   }`}
+                  aria-label={`背景${bg}`}
                 />
               ))}
-            </div>
+            </fieldset>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-3 sm:gap-4 justify-center sm:justify-start">
           <button
+            type="button"
             onClick={onDownload}
             disabled={isGenerating}
             className={`flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm sm:text-base ${
@@ -91,6 +90,7 @@ export const Controls: React.FC<Props> = ({
             </span>
           </button>
           <button
+            type="button"
             onClick={onShare}
             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm sm:text-base"
           >
@@ -108,6 +108,7 @@ export const Controls: React.FC<Props> = ({
             <X size={20} />
           </a>
           <button
+            type="button"
             onClick={() => {
               toast.success('画像を保存して、Instagramアプリから共有してください');
             }}

@@ -1,5 +1,7 @@
+import type { FontOption } from "../types";
+
 export const FONTS: FontOption[] = [
-  { name: '思源明朝', value: 'source-serif', family: '"Shippori Mincho", serif' },
+  { name: 'しっぽり明朝', value: 'source-serif', family: '"Shippori Mincho", serif' },
   { name: 'クレー', value: 'klee', family: '"Klee One", serif' },
   { name: '禅明朝', value: 'zen-mincho', family: '"Zen Old Mincho", serif' },
   { name: '禅アンティーク', value: 'zen-antique', family: '"Zen Antique", serif' },
