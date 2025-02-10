@@ -5,6 +5,7 @@ import type { TankaData } from '../types';
 import { FontSelect } from './FontSelect';
 import { Switch } from '../components/ui/switch';
 import { Label } from '../components/ui/label';
+import { type ChangeEvent, useState, useEffect } from 'react';
 
 interface Props {
   tanka: TankaData;
@@ -27,6 +28,42 @@ export const Controls = ({
     bg: tanka.background,
   }).toString()}`;
 
+  const [text, setText] = useState<string>(tanka.text);
+  const [isComposing, setIsComposing] = useState<boolean>(false);
+
+  useEffect(() => {
+    setText(tanka.text);
+  }, [tanka.text]);
+
+  const onTextChange = (newText: string) => {
+    onTankaChange({ ...tanka, text: newText });
+  };
+
+  const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    // 常にローカルのテキスト状態は更新する
+    const newText = e.target.value;
+    setText(newText);
+    
+    // IME入力中でない場合のみ親コンポーネントに通知
+    if (!isComposing) {
+      onTextChange(newText);
+    }
+  };
+
+  const handleCompositionStart = () => {
+    console.log('handleCompositionStart');
+    setIsComposing(true);
+  };
+
+  const handleCompositionEnd = (e: React.CompositionEvent<HTMLTextAreaElement>) => {
+    console.log('handleCompositionEnd');
+    setIsComposing(false);
+    // 日本語入力確定後に値を更新
+    const newText = (e.target as HTMLTextAreaElement).value;
+    setText(newText);
+    onTextChange(newText);
+  };
+
   return (
     <div className="w-full max-w-2xl mx-auto mt-8 p-4 sm:p-6 bg-white rounded-lg shadow-lg">
       <div className="space-y-4 sm:space-y-6">
@@ -36,15 +73,17 @@ export const Controls = ({
           </label>
           <textarea
             id="tanka-text"
-            value={tanka.text}
+            value={text}
             maxLength={50}
-            onChange={(e) => onTankaChange({ ...tanka, text: e.target.value })}
+            onChange={handleChange}
+            onCompositionStart={handleCompositionStart}
+            onCompositionEnd={handleCompositionEnd}
             className="w-full h-40 p-3 border rounded-md focus:ring-2 focus:ring-indigo-500 text-base sm:text-lg"
             placeholder="5-7-5-7-7の音数で
 短歌を入力してください..."
           />
           <div className="mt-1 text-sm text-gray-500 text-right">
-            {tanka.text.length}/50文字
+            {text.length}/50文字
           </div>
         </div>
 
