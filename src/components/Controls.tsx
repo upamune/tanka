@@ -37,11 +37,15 @@ export const Controls = ({
           <textarea
             id="tanka-text"
             value={tanka.text}
+            maxLength={50}
             onChange={(e) => onTankaChange({ ...tanka, text: e.target.value })}
             className="w-full h-40 p-3 border rounded-md focus:ring-2 focus:ring-indigo-500 text-base sm:text-lg"
             placeholder="5-7-5-7-7の音数で
 短歌を入力してください..."
           />
+          <div className="mt-1 text-sm text-gray-500 text-right">
+            {tanka.text.length}/50文字
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

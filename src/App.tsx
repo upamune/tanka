@@ -125,10 +125,18 @@ function App() {
       const bgParam = params.get('bg');
       const isVerticalParam = params.get('vertical');
 
+      // フォントの検証
+      const isValidFont = FONTS.some(font => font.family === fontParam);
+      const validFont = isValidFont ? fontParam : FONTS[0].family;
+
+      // 背景の検証
+      const isValidBackground = BACKGROUNDS.includes(bgParam || '');
+      const validBackground = isValidBackground ? bgParam : BACKGROUNDS[0];
+
       setTanka(current => ({
         text: textParam || current.text,
-        font: fontParam || current.font,
-        background: bgParam || current.background,
+        font: validFont || current.font,
+        background: validBackground || current.background,
         isVertical: isVerticalParam ? isVerticalParam === 'true' : current.isVertical,
       }));
     };

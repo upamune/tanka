@@ -8,7 +8,9 @@ interface Props {
 }
 
 export const TankaDisplay: React.FC<Props> = ({ tanka, containerRef }) => {
-  const lines = tanka.text.split('\n');
+  // 50文字までに制限
+  const displayText = tanka.text.slice(0, 50);
+  const lines = displayText.split('\n');
   const hasContent = lines.some(line => line.trim().length > 0);
 
   // インラインスタイルとしてフォントを適用
@@ -26,13 +28,13 @@ export const TankaDisplay: React.FC<Props> = ({ tanka, containerRef }) => {
     <div
       ref={containerRef}
       className={cn(
-        "w-full max-w-2xl mx-auto p-12 rounded-lg shadow-lg flex justify-center",
+        "w-full max-w-2xl mx-auto p-12 rounded-lg shadow-lg flex justify-center h-[500px]",
         tanka.background
       )}
     >
       <div
         className={cn(
-          "text-2xl md:text-3xl text-gray-800 text-center leading-relaxed min-h-[300px] flex",
+          "text-2xl md:text-3xl text-gray-800 text-center leading-relaxed flex",
           tanka.isVertical ? "items-start justify-center" : "flex-col items-center justify-center"
         )}
         style={style}
