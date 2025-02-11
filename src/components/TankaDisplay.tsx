@@ -28,7 +28,7 @@ export const TankaDisplay: React.FC<Props> = ({ tanka, containerRef }) => {
     <div
       ref={containerRef}
       className={cn(
-        "w-full max-w-2xl mx-auto p-12 rounded-lg shadow-lg flex justify-center h-[500px]",
+        "w-full max-w-2xl mx-auto p-12 rounded-lg shadow-lg flex justify-center h-[400px] sm:h-[500px]",
         tanka.background
       )}
     >
