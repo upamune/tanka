@@ -1,4 +1,4 @@
-import { Download, Share2, Twitter, Instagram } from 'lucide-react';
+import { Download, Share2, Twitter, Instagram, Copy } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { BACKGROUNDS } from '../constants';
 import type { TankaData } from '../types';
@@ -13,6 +13,7 @@ interface Props {
   onDownload: () => void;
   onShare: () => void;
   isGenerating: boolean;
+  onCopyImage: () => Promise<void>;
 }
 
 export const Controls = ({
@@ -21,6 +22,7 @@ export const Controls = ({
   onDownload,
   onShare,
   isGenerating,
+  onCopyImage,
 }: Props) => {
   const shareUrl = `${window.location.origin}${window.location.pathname}?${new URLSearchParams({
     text: tanka.text,
@@ -144,12 +146,40 @@ export const Controls = ({
             {isGenerating ? (
               <>
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>生成中...</span>
+                <span>画像保存</span>
               </>
             ) : (
               <>
                 <Download size={20} />
                 <span>画像保存</span>
+              </>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await onCopyImage();
+                toast.success('画像をクリップボードにコピーしました');
+              } catch (error: unknown) {
+                console.error(error);
+                toast.error('画像のコピーに失敗しました');
+              }
+            }}
+            disabled={isGenerating}
+            className={`flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 text-sm sm:text-base ${
+              isGenerating ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            {isGenerating ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>画像をコピー</span>
+              </>
+            ) : (
+              <>
+                <Copy size={20} />
+                <span>画像をコピー</span>
               </>
             )}
           </button>

@@ -116,6 +116,47 @@ function App() {
       .then(() => toast.success('共有用URLをコピーしました'));
   };
 
+  const handleCopyImage = async () => {
+    if (containerRef.current) {
+      setIsGenerating(true);
+      try {
+        await document.fonts.ready;
+        
+        const currentFont = new FontFace(tanka.font, `local(${tanka.font})`);
+        try {
+          await currentFont.load();
+          document.fonts.add(currentFont);
+        } catch (e) {
+          console.warn('Font loading warning:', e);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const dataUrl = await toPng(containerRef.current, {
+          quality: 1.0,
+          pixelRatio: 3,
+          skipAutoScale: false,
+        });
+
+        // Convert data URL to Blob
+        const response = await fetch(dataUrl);
+        const blob = await response.blob();
+
+        // Copy to clipboard
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            [blob.type]: blob
+          })
+        ]);
+      } catch (error) {
+        console.error('Image copy error:', error);
+        throw error;
+      } finally {
+        setIsGenerating(false);
+      }
+    }
+  };
+
   // Load from URL params on mount and when URL changes
   React.useEffect(() => {
     const loadParamsFromUrl = () => {
@@ -179,6 +220,7 @@ function App() {
         onDownload={handleDownload}
         onShare={handleShare}
         isGenerating={isGenerating}
+        onCopyImage={handleCopyImage}
       />
     </div>
   );
