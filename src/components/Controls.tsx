@@ -1,4 +1,4 @@
-import { Download, Share2, Twitter, Instagram, Copy, Image, ChevronDown, Link } from 'lucide-react';
+import { Download, Share2, Twitter, Copy, Image, ChevronDown, Link } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { BACKGROUNDS } from '../constants';
 import type { TankaData } from '../types';
@@ -14,6 +14,7 @@ interface Props {
   onShare: () => void;
   isGenerating: boolean;
   onCopyImage: () => Promise<void>;
+  generatingProgress: number;
 }
 
 export const Controls = ({
@@ -23,6 +24,7 @@ export const Controls = ({
   onShare,
   isGenerating,
   onCopyImage,
+  generatingProgress,
 }: Props) => {
   const shareUrl = `${window.location.origin}${window.location.pathname}?${new URLSearchParams({
     text: tanka.text,
@@ -166,7 +168,7 @@ export const Controls = ({
               {isGenerating ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>生成中...</span>
+                  <span>生成中 {generatingProgress}%</span>
                 </>
               ) : (
                 <>

@@ -14,6 +14,7 @@ function App() {
     isVertical: true,
   });
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingProgress, setGeneratingProgress] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -31,24 +32,100 @@ function App() {
     window.history.replaceState({}, '', newUrl);
   };
 
+  // 進捗を管理する関数
+  const startProgress = () => {
+    const startTime = Date.now();
+    const duration = 5000; // 5秒
+
+    const progressInterval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(99, Math.round((elapsed / duration) * 100));
+      
+      if (elapsed >= duration) {
+        clearInterval(progressInterval);
+      }
+      
+      setGeneratingProgress(progress);
+    }, 50); // 50msごとに更新
+
+    return progressInterval;
+  };
+
   const handleDownload = async () => {
     if (containerRef.current) {
       setIsGenerating(true);
+      setGeneratingProgress(0);
+      const progressInterval = startProgress();
+
       try {
-        // フォントの読み込みを待つ
         await document.fonts.ready;
-        
-        // 使用中のフォントが確実に読み込まれるのを待つ
         const currentFont = new FontFace(tanka.font, `local(${tanka.font})`);
         try {
           await currentFont.load();
           document.fonts.add(currentFont);
         } catch (e) {
           console.warn('Font loading warning:', e);
-          // フォントのロードに失敗しても続行（ローカルフォントの場合）
         }
 
-        // DOMの更新とレンダリングを待つ
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const dataUrl = await toPng(containerRef.current, {
+          quality: 1.0,
+          pixelRatio: 3,
+          skipAutoScale: false,
+        });
+
+        clearInterval(progressInterval);
+        setGeneratingProgress(100);
+
+        const link = document.createElement('a');
+        link.download = 'tanka.png';
+        link.href = dataUrl;
+        link.click();
+        toast.success('画像を保存しました');
+      } catch (error) {
+        console.error('Image generation error:', error);
+        toast.error('画像の生成に失敗しました。ブラウザをリロードして再度お試しください。');
+      } finally {
+        clearInterval(progressInterval);
+        setIsGenerating(false);
+        setGeneratingProgress(0);
+      }
+    }
+  };
+
+  const handleShare = () => {
+    const params = new URLSearchParams();
+    
+    // 各パラメータを設定
+    if (tanka.text) params.set('text', tanka.text);
+    if (tanka.font) params.set('font', tanka.font);
+    if (tanka.background) params.set('bg', tanka.background);
+    params.set('vertical', String(tanka.isVertical));
+    
+    // 現在のパスを保持しつつ、クエリパラメータを更新
+    const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    
+    navigator.clipboard.writeText(shareUrl)
+      .then(() => toast.success('共有用URLをコピーしました'));
+  };
+
+  const handleCopyImage = async () => {
+    if (containerRef.current) {
+      setIsGenerating(true);
+      setGeneratingProgress(0);
+      const progressInterval = startProgress();
+
+      try {
+        await document.fonts.ready;
+        const currentFont = new FontFace(tanka.font, `local(${tanka.font})`);
+        try {
+          await currentFont.load();
+          document.fonts.add(currentFont);
+        } catch (e) {
+          console.warn('Font loading warning:', e);
+        }
+
         await new Promise(resolve => setTimeout(resolve, 500));
 
         // 要素の実際のサイズを取得
@@ -85,74 +162,25 @@ function App() {
           `,
           backgroundColor: '#ffffff',
         });
-        
-        const link = document.createElement('a');
-        link.download = 'tanka.png';
-        link.href = dataUrl;
-        link.click();
-        toast.success('画像を保存しました');
-      } catch (error) {
-        console.error('Image generation error:', error);
-        toast.error('画像の生成に失敗しました。ブラウザをリロードして再度お試しください。');
-      } finally {
-        setIsGenerating(false);
-      }
-    }
-  };
 
-  const handleShare = () => {
-    const params = new URLSearchParams();
-    
-    // 各パラメータを設定
-    if (tanka.text) params.set('text', tanka.text);
-    if (tanka.font) params.set('font', tanka.font);
-    if (tanka.background) params.set('bg', tanka.background);
-    params.set('vertical', String(tanka.isVertical));
-    
-    // 現在のパスを保持しつつ、クエリパラメータを更新
-    const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-    
-    navigator.clipboard.writeText(shareUrl)
-      .then(() => toast.success('共有用URLをコピーしました'));
-  };
-
-  const handleCopyImage = async () => {
-    if (containerRef.current) {
-      setIsGenerating(true);
-      try {
-        await document.fonts.ready;
-        
-        const currentFont = new FontFace(tanka.font, `local(${tanka.font})`);
-        try {
-          await currentFont.load();
-          document.fonts.add(currentFont);
-        } catch (e) {
-          console.warn('Font loading warning:', e);
-        }
-
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        const dataUrl = await toPng(containerRef.current, {
-          quality: 1.0,
-          pixelRatio: 3,
-          skipAutoScale: false,
-        });
-
-        // Convert data URL to Blob
         const response = await fetch(dataUrl);
         const blob = await response.blob();
 
-        // Copy to clipboard
         await navigator.clipboard.write([
           new ClipboardItem({
             [blob.type]: blob
           })
         ]);
+
+        clearInterval(progressInterval);
+        setGeneratingProgress(100);
       } catch (error) {
         console.error('Image copy error:', error);
         throw error;
       } finally {
+        clearInterval(progressInterval);
         setIsGenerating(false);
+        setGeneratingProgress(0);
       }
     }
   };
@@ -221,6 +249,7 @@ function App() {
         onShare={handleShare}
         isGenerating={isGenerating}
         onCopyImage={handleCopyImage}
+        generatingProgress={generatingProgress}
       />
     </div>
   );
