@@ -1,11 +1,11 @@
-import { Download, Share2, Twitter, Instagram, Copy } from 'lucide-react';
+import { Download, Share2, Twitter, Instagram, Copy, Image, ChevronDown, Link } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { BACKGROUNDS } from '../constants';
 import type { TankaData } from '../types';
 import { FontSelect } from './FontSelect';
 import { Switch } from '../components/ui/switch';
 import { Label } from '../components/ui/label';
-import { type ChangeEvent, useState, useEffect } from 'react';
+import { type ChangeEvent, useState, useEffect, useRef } from 'react';
 
 interface Props {
   tanka: TankaData;
@@ -32,10 +32,29 @@ export const Controls = ({
 
   const [text, setText] = useState<string>(tanka.text);
   const [isComposing, setIsComposing] = useState<boolean>(false);
+  const [isImageMenuOpen, setIsImageMenuOpen] = useState(false);
+  const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
+  const imageMenuRef = useRef<HTMLDivElement>(null);
+  const shareMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setText(tanka.text);
   }, [tanka.text]);
+
+  // クリックアウトサイドの処理を共通化
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (imageMenuRef.current && !imageMenuRef.current.contains(event.target as Node)) {
+        setIsImageMenuOpen(false);
+      }
+      if (shareMenuRef.current && !shareMenuRef.current.contains(event.target as Node)) {
+        setIsShareMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const onTextChange = (newText: string) => {
     onTankaChange({ ...tanka, text: newText });
@@ -135,81 +154,106 @@ export const Controls = ({
         </div>
 
         <div className="flex flex-wrap gap-3 sm:gap-4 justify-center sm:justify-start">
-          <button
-            type="button"
-            onClick={onDownload}
-            disabled={isGenerating}
-            className={`flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm sm:text-base ${
-              isGenerating ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            {isGenerating ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>画像保存</span>
-              </>
-            ) : (
-              <>
-                <Download size={20} />
-                <span>画像保存</span>
-              </>
+          <div className="relative" ref={imageMenuRef}>
+            <button
+              type="button"
+              onClick={() => setIsImageMenuOpen(!isImageMenuOpen)}
+              disabled={isGenerating}
+              className={`flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm sm:text-base ${
+                isGenerating ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              {isGenerating ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>生成中...</span>
+                </>
+              ) : (
+                <>
+                  <Image size={20} />
+                  <span>画像を作成</span>
+                  <ChevronDown size={16} className={`transition-transform ${isImageMenuOpen ? 'rotate-180' : ''}`} />
+                </>
+              )}
+            </button>
+
+            {isImageMenuOpen && !isGenerating && (
+              <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                <div className="py-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onDownload();
+                      setIsImageMenuOpen(false);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
+                  >
+                    <Download size={18} />
+                    <span>保存</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await onCopyImage();
+                        toast.success('画像をクリップボードにコピーしました');
+                      } catch (error: unknown) {
+                        console.error(error);
+                        toast.error('画像のコピーに失敗しました');
+                      }
+                      setIsImageMenuOpen(false);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
+                  >
+                    <Copy size={18} />
+                    <span>コピー</span>
+                  </button>
+                </div>
+              </div>
             )}
-          </button>
-          <button
-            type="button"
-            onClick={async () => {
-              try {
-                await onCopyImage();
-                toast.success('画像をクリップボードにコピーしました');
-              } catch (error: unknown) {
-                console.error(error);
-                toast.error('画像のコピーに失敗しました');
-              }
-            }}
-            disabled={isGenerating}
-            className={`flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 text-sm sm:text-base ${
-              isGenerating ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            {isGenerating ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>画像をコピー</span>
-              </>
-            ) : (
-              <>
-                <Copy size={20} />
-                <span>画像をコピー</span>
-              </>
+          </div>
+
+          <div className="relative" ref={shareMenuRef}>
+            <button
+              type="button"
+              onClick={() => setIsShareMenuOpen(!isShareMenuOpen)}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm sm:text-base"
+            >
+              <Share2 size={20} />
+              <span>共有</span>
+              <ChevronDown size={16} className={`transition-transform ${isShareMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isShareMenuOpen && (
+              <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                <div className="py-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onShare();
+                      setIsShareMenuOpen(false);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
+                  >
+                    <Link size={18} />
+                    <span>URLをコピー</span>
+                  </button>
+                  <a
+                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                      tanka.text
+                    )}&url=${encodeURIComponent(shareUrl)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsShareMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
+                  >
+                    <Twitter size={18} />
+                    <span>Twitterに投稿</span>
+                  </a>
+                </div>
+              </div>
             )}
-          </button>
-          <button
-            type="button"
-            onClick={onShare}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm sm:text-base"
-          >
-            <Share2 size={20} />
-            <span className="hidden sm:inline">共有</span>
-          </button>
-          <a
-            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
-              tanka.text
-            )}&url=${encodeURIComponent(shareUrl)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm sm:text-base"
-          >
-            <Twitter size={20} />
-          </a>
-          <button
-            type="button"
-            onClick={() => {
-              toast.success('画像を保存して、Instagramアプリから共有してください');
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700 text-sm sm:text-base"
-          >
-            <Instagram size={20} />
-          </button>
+          </div>
         </div>
       </div>
     </div>
